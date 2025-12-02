@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>น้องบู้ไม่อ้วน (Ultimate)</title>
+    <link rel="icon" type="image/jpeg" href="https://raw.githubusercontent.com/panwyyt/280Thread/refs/heads/main/Panthawit's%20Favicon%20Pixled.jpg">
+
+    <!-- SoundCloud API -->
+    <script src="https://w.soundcloud.com/player/api.js"></script>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            /* Neumorphism Palette (Dark) */
+            --bg-color: #292d32;
+            --shadow-light: #353b41;
+            --shadow-dark: #1d2023;
+            
+            --text-main: #e0e5ec;
+            --text-muted: #8b9bb4;
+            
+            /* Status Colors */
+            --cyan-glow: #00fff2;
+            --red-glow: #ff4d4d;
+            --yellow-glow: #ffd700;
+        }
+
+        * { box-sizing: border-box; transition: all 0.3s ease; user-select: none; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Kanit', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            /* Fix for mobile viewport height issues */
+            min-height: -webkit-fill-available;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* --- Neumorphism Base Styles --- */
+        .neu-panel {
+            background: var(--bg-color);
+            border-radius: 30px;
+            box-shadow: 10px 10px 20px var(--shadow-dark), 
+                       -10px -10px 20px var(--shadow-light);
+            padding: 40px 30px;
+            width: 90%;
+            max-width: 480px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .neu-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: none;
+            background: var(--bg-color);
+            color: var(--text-main);
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 5px 5px 10px var(--shadow-dark), 
+                       -5px -5px 10px var(--shadow-light);
+        }
+
+        .neu-btn:active {
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), 
+                        inset -4px -4px 8px var(--shadow-light);
+            transform: scale(0.95);
+        }
+
+        .neu-input {
+            width: 60px;
+            height: 45px;
+            border: none;
+            background: var(--bg-color);
+            color: var(--cyan-glow);
+            font-size: 1.3rem;
+            font-weight: 600;
+            text-align: center;
+            border-radius: 15px;
+            /* Inset Shadow for Inputs */
+            box-shadow: inset 5px 5px 10px var(--shadow-dark), 
+                        inset -5px -5px 10px var(--shadow-light);
+            font-family: inherit;
+        }
+
+        .neu-input:focus {
+            outline: none;
+            color: #fff;
+        }
+
+        /* --- Layout --- */
+        .app-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0 0 10px 0;
+            text-align: center;
+            color: var(--text-main);
+            text-shadow: 2px 2px 4px var(--shadow-dark);
+        }
+
+        .total-time-display {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 25px;
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .label {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* --- Large Action Button --- */
+        .action-btn {
+            width: 100%;
+            padding: 20px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            border-radius: 20px;
+            border: none;
+            background: var(--bg-color);
+            color: var(--cyan-glow);
+            margin-top: 15px;
+            cursor: pointer;
+            box-shadow: 8px 8px 16px var(--shadow-dark), 
+                       -8px -8px 16px var(--shadow-light);
+        }
+
+        .action-btn:active {
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), 
+                        inset -4px -4px 8px var(--shadow-light);
+            transform: translateY(2px);
+        }
+
+        /* Stop Button Mode */
+        .action-btn.stop-mode {
+            position: fixed;
+            bottom: 30px; /* Safe area from bottom */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 85%;
+            max-width: 400px;
+            color: var(--red-glow);
+            z-index: 100;
+            /* Glassy Background to ensure text behind isn't weird if overlap happens */
+            background: rgba(41, 45, 50, 0.95);
+            backdrop-filter: blur(5px);
+        }
+
+        /* --- Timer View --- */
+        .timer-view {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            /* Change to space-evenly to distribute content better on tall screens */
+            justify-content: space-evenly; 
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0; left: 0;
+            background: var(--bg-color);
+            /* Add padding bottom so content doesn't sit under the STOP button */
+            padding-bottom: 110px; 
+            padding-top: 20px;
+        }
+
+        .round-pill {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            padding: 8px 25px;
+            border-radius: 50px;
+            box-shadow: inset 3px 3px 6px var(--shadow-dark), 
+                        inset -3px -3px 6px var(--shadow-light);
+        }
+
+        .phase-badge {
+            font-size: 15vw; /* Responsive font size */
+            font-weight: 700;
+            margin: 10px 0;
+            text-transform: uppercase;
+            line-height: 1.2;
+        }
+        
+        .quote-text {
+            font-size: 1rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+            height: 25px;
+            font-style: italic;
+            padding: 0 20px;
+            text-align: center;
+        }
+
+        .timer-big {
+            font-size: 25vw; /* Responsive font size based on viewport width */
+            font-weight: 600;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+            margin: 0;
+            color: var(--text-main);
+            text-shadow: 5px 5px 10px var(--shadow-dark), 
+                        -5px -5px 10px var(--shadow-light);
+        }
+
+        /* Limit max font size on desktop */
+        @media (min-width: 600px) {
+            .timer-big { font-size: 8rem; }
+            .phase-badge { font-size: 3.5rem; }
+        }
+
+        /* --- Text Colors per Phase --- */
+        .text-cyan { color: var(--cyan-glow); text-shadow: 0 0 15px rgba(0,255,242,0.3); }
+        .text-red { color: var(--red-glow); text-shadow: 0 0 15px rgba(255,77,77,0.3); }
+        .text-yellow { color: var(--yellow-glow); text-shadow: 0 0 15px rgba(255,215,0,0.3); }
+
+        /* --- GIF Container --- */
+        .gif-container {
+            width: 60vw;
+            max-width: 280px;
+            height: 40vw;
+            max-height: 200px;
+            margin: 0 auto;
+            display: none; /* Flex when active */
+            align-items: center;
+            justify-content: center;
+        }
+        .gif-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 0 10px var(--cyan-glow));
+        }
+
+        /* Utility */
+        .hidden { display: none !important; }
+        .hidden-player { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+        
+        /* Input spin buttons remove */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Audio Element for Coach Voice -->
+    <audio id="coach-audio" preload="auto" loop>
+        <source src="https://github.com/panwyyt/280Thread/raw/refs/heads/main/BooWorkOut.wav" type="audio/wav">
+    </audio>
+
+    <div class="app-container">
+        
+        <!-- Setup Screen -->
+        <div id="setup-screen" class="neu-panel">
+            <h1 class="app-title">น้องบู้ไม่อ้วน</h1>
+            <div id="total-time-calc" class="total-time-display">รวมเวลา: 4 นาที 30 วินาที</div>
+
+            <!-- Manual Controls -->
+            <div class="setting-row">
+                <div class="label">เวลาลุย (วิ)</div>
+                <div class="controls">
+                    <button class="neu-btn" onclick="adjust('work', -5)">-</button>
+                    <input type="number" id="val-work" class="neu-input" value="30" onchange="manualInput('work', this.value)">
+                    <button class="neu-btn" onclick="adjust('work', 5)">+</button>
+                </div>
+            </div>
+
+            <div class="setting-row">
+                <div class="label">เวลาพัก (วิ)</div>
+                <div class="controls">
+                    <button class="neu-btn" onclick="adjust('rest', -5)">-</button>
+                    <input type="number" id="val-rest" class="neu-input" value="15" onchange="manualInput('rest', this.value)">
+                    <button class="neu-btn" onclick="adjust('rest', 5)">+</button>
+                </div>
+            </div>
+
+            <div class="setting-row">
+                <div class="label">จำนวนรอบ</div>
+                <div class="controls">
+                    <button class="neu-btn" onclick="adjust('rounds', -1)">-</button>
+                    <input type="number" id="val-rounds" class="neu-input" value="6" onchange="manualInput('rounds', this.value)">
+                    <button class="neu-btn" onclick="adjust('rounds', 1)">+</button>
+                </div>
+            </div>
+
+            <button id="main-btn" class="action-btn" onclick="toggleWorkout()">START</button>
+        </div>
+
+        <!-- Workout Screen -->
+        <div id="workout-screen" class="timer-view">
+            <div id="round-display" class="round-pill">รอบที่ 1 / 6</div>
+            
+            <div id="gif-box" class="gif-container hidden">
+                <img id="ghost-img" src="https://pouch.jumpshare.com/preview/raqV5FUTRtXX_gHZrCNQdLm_o8BETvWLxCb0iuqwud3sOJp3MllC0ztc50Abn1Dn6DdtXAwVbcxNm6sSrj0IfXtJwRRykRjWZk7cZbjgBIE" alt="Ghost Animation">
+            </div>
+
+            <div id="phase-title" class="phase-badge text-cyan">ลุย!</div>
+            <div id="quote-display" class="quote-text">...</div>
+            <div id="timer-display" class="timer-big">30</div>
+        </div>
+
+    </div>
+
+    <!-- Hidden SoundCloud -->
+    <div class="hidden-player">
+        <iframe id="sc-widget" width="100%" height="166" scrolling="no" frameborder="no" allow="autoplay" 
+        src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/2047650568&color=%231abc9c&auto_play=false&hide_related=false&show_comments=false&show_user=false&show_reposts=false&loop=true">
+        </iframe>
+    </div>
+
+    <script>
+        // --- Application State ---
+        let settings = { work: 30, rest: 15, rounds: 6 };
+        let timer = null;
+        let timeLeft = 0;
+        let currentRound = 1;
+        let isRunning = false;
+        let phase = 'stopped'; // stopped, ready, work, rest
+        let wakeLock = null;
+
+        // --- Quotes ---
+        const workQuotes = [
+            "เอาไขมันออกไป!", "เพื่อชาบูมื้อเย็น!", "อย่าอู้! น้องบู้เห็นนะ", 
+            "ขยับตัวหน่อยซิแม่", "ผอมแน่รอบนี้!", "เบิร์นเข้าไป!", 
+            "สู้เขาสิวะอิหญิง!", "ฮึบๆ อีกนิดเดียว"
+        ];
+        const restQuotes = [
+            "หายใจลึกๆ จ้า", "จิบน้ำได้นิดนึง", "ห้ามตายนะ", 
+            "เตรียมตัวรอบต่อไป", "อย่าเพิ่งนอนยาวนะ", "เช็ดเหงื่อแปป"
+        ];
+        const readyQuotes = [
+            "วางโทรศัพท์ด่วน!", "เตรียมตัว...", "พร้อมมั้ย?", "เข้าที่..."
+        ];
+
+        // --- SoundCloud & Audio ---
+        const iframeElement = document.querySelector('#sc-widget');
+        const widget = SC.Widget(iframeElement);
+        const coachAudio = document.getElementById('coach-audio');
+        coachAudio.volume = 1.0;
+        
+        // --- Beep Generator (AudioContext) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playBeep(freq = 440, type = 'sine', duration = 0.1) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.frequency.value = freq;
+            osc.type = type;
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        // --- Initialization ---
+        updateTotalCalc();
+
+        // --- Input Handling ---
+        function adjust(key, amount) {
+            settings[key] += amount;
+            if (settings[key] < 1) settings[key] = 1; 
+            document.getElementById(`val-${key}`).value = settings[key];
+            updateTotalCalc();
+        }
+
+        function manualInput(key, value) {
+            let val = parseInt(value);
+            if (isNaN(val) || val < 1) val = 1;
+            settings[key] = val;
+            document.getElementById(`val-${key}`).value = val;
+            updateTotalCalc();
+        }
+
+        function updateTotalCalc() {
+            // Formula: (Work + Rest) * Rounds
+            let totalSec = (settings.work + settings.rest) * settings.rounds;
+            let m = Math.floor(totalSec / 60);
+            let s = totalSec % 60;
+            document.getElementById('total-time-calc').innerText = `รวมเวลา: ${m} นาที ${s} วินาที`;
+        }
+
+        // --- Wake Lock API ---
+        async function requestWakeLock() {
+            try {
+                wakeLock = await navigator.wakeLock.request('screen');
+                wakeLock.addEventListener('release', () => {
+                    console.log('Wake Lock released');
+                });
+                console.log('Wake Lock active');
+            } catch (err) {
+                console.error(`${err.name}, ${err.message}`);
+            }
+        }
+
+        // --- Main Logic ---
+        function toggleWorkout() {
+            if (isRunning) {
+                endWorkout();
+            } else {
+                beginWorkout();
+            }
+        }
+
+        function beginWorkout() {
+            isRunning = true;
+            currentRound = 1;
+            
+            // Activate Audio Context on user gesture
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            requestWakeLock();
+            
+            // UI Transition
+            document.getElementById('setup-screen').classList.add('hidden');
+            const workoutScreen = document.getElementById('workout-screen');
+            workoutScreen.style.display = 'flex'; // Overlay style
+            
+            const btn = document.getElementById('main-btn');
+            btn.innerText = "STOP";
+            btn.classList.add('stop-mode');
+            document.body.appendChild(btn); 
+            
+            // Start with Ready Phase
+            startPhase('ready');
+        }
+
+        function endWorkout() {
+            isRunning = false;
+            clearInterval(timer);
+            phase = 'stopped';
+            
+            // Release Wake Lock
+            if (wakeLock !== null) {
+                wakeLock.release().then(() => { wakeLock = null; });
+            }
+
+            // Stop Media
+            widget.pause();
+            coachAudio.pause();
+            coachAudio.currentTime = 0;
+
+            // UI Reset
+            document.getElementById('setup-screen').classList.remove('hidden');
+            document.getElementById('workout-screen').style.display = 'none';
+            document.getElementById('gif-box').classList.add('hidden');
+
+            const btn = document.getElementById('main-btn');
+            btn.innerText = "START";
+            btn.classList.remove('stop-mode');
+            document.getElementById('setup-screen').appendChild(btn); 
+        }
+
+        function startPhase(newPhase) {
+            phase = newPhase;
+            clearInterval(timer);
+            
+            const roundDisp = document.getElementById('round-display');
+            const gifBox = document.getElementById('gif-box');
+            const gifImg = document.getElementById('ghost-img');
+            const phaseTitle = document.getElementById('phase-title');
+            const quoteDisp = document.getElementById('quote-display');
+            const timerDisp = document.getElementById('timer-display');
+
+            roundDisp.innerText = `รอบที่ ${currentRound} / ${settings.rounds}`;
+
+            if (phase === 'ready') {
+                timeLeft = 5; // Fixed 5s prep
+                phaseTitle.innerText = "เตรียมตัว";
+                phaseTitle.className = "phase-badge text-yellow";
+                timerDisp.style.color = "var(--yellow-glow)";
+                
+                quoteDisp.innerText = readyQuotes[Math.floor(Math.random() * readyQuotes.length)];
+                
+                gifBox.style.display = 'none';
+                
+                // No music/coach in Ready phase
+                widget.pause();
+                coachAudio.pause();
+
+            } else if (phase === 'work') {
+                timeLeft = settings.work;
+                phaseTitle.innerText = "ลุย!";
+                phaseTitle.className = "phase-badge text-cyan";
+                timerDisp.style.color = "var(--cyan-glow)";
+                
+                quoteDisp.innerText = workQuotes[Math.floor(Math.random() * workQuotes.length)];
+
+                gifBox.classList.remove('hidden');
+                gifBox.style.display = 'flex';
+                // Reset GIF
+                const currentSrc = gifImg.src;
+                gifImg.src = "";
+                gifImg.src = currentSrc;
+
+                // Play Audio
+                widget.play();
+                coachAudio.play().catch(e => console.log(e));
+                
+                // Whistle/High Beep start
+                playBeep(880, 'square', 0.3);
+
+            } else if (phase === 'rest') {
+                timeLeft = settings.rest;
+                phaseTitle.innerText = "พัก";
+                phaseTitle.className = "phase-badge text-red";
+                timerDisp.style.color = "var(--red-glow)";
+                
+                quoteDisp.innerText = restQuotes[Math.floor(Math.random() * restQuotes.length)];
+
+                gifBox.style.display = 'none';
+                
+                // Pause Audio
+                widget.pause();
+                coachAudio.pause();
+                
+                // Low Beep start rest
+                playBeep(440, 'sine', 0.3);
+            }
+
+            updateTimerText();
+
+            timer = setInterval(() => {
+                timeLeft--;
+                updateTimerText();
+                
+                // Countdown Sound Logic (3-2-1)
+                if (timeLeft > 0 && timeLeft <= 3) {
+                    playBeep(600, 'triangle', 0.1); // Short beep
+                }
+
+                if (timeLeft < 0) {
+                    nextPhase();
+                }
+            }, 1000);
+        }
+
+        function nextPhase() {
+            if (phase === 'ready') {
+                startPhase('work');
+            } else if (phase === 'work') {
+                if (currentRound === settings.rounds && settings.rest === 0) {
+                    endWorkout(); 
+                } else {
+                    startPhase('rest');
+                }
+            } else if (phase === 'rest') {
+                if (currentRound < settings.rounds) {
+                    currentRound++;
+                    startPhase('work');
+                } else {
+                    endWorkout();
+                }
+            }
+        }
+
+        function updateTimerText() {
+            document.getElementById('timer-display').innerText = timeLeft;
+        }
+
+        // Re-apply Wake Lock on visibility change
+        document.addEventListener('visibilitychange', async () => {
+            if (wakeLock !== null && document.visibilityState === 'visible') {
+                requestWakeLock();
+            }
+        });
+
+    </script>
+</body>
+</html>
