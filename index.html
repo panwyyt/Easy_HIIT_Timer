@@ -3,13 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>น้องบู้ไม่อ้วน (Ultimate)</title>
+    <title>น้องบู้ไม่อ้วน (Ultimate Fixed)</title>
     <link rel="icon" type="image/jpeg" href="https://raw.githubusercontent.com/panwyyt/280Thread/refs/heads/main/Panthawit's%20Favicon%20Pixled.jpg">
 
-    <!-- SoundCloud API -->
     <script src="https://w.soundcloud.com/player/api.js"></script>
     
-    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
@@ -171,7 +169,7 @@
             max-width: 400px;
             color: var(--red-glow);
             z-index: 100;
-            /* Glassy Background to ensure text behind isn't weird if overlap happens */
+            /* Glassy Background */
             background: rgba(41, 45, 50, 0.95);
             backdrop-filter: blur(5px);
         }
@@ -181,14 +179,12 @@
             display: none;
             flex-direction: column;
             align-items: center;
-            /* Change to space-evenly to distribute content better on tall screens */
             justify-content: space-evenly; 
             width: 100%;
             height: 100%;
             position: absolute;
             top: 0; left: 0;
             background: var(--bg-color);
-            /* Add padding bottom so content doesn't sit under the STOP button */
             padding-bottom: 110px; 
             padding-top: 20px;
         }
@@ -272,19 +268,16 @@
 </head>
 <body>
 
-    <!-- Audio Element for Coach Voice -->
-    <audio id="coach-audio" preload="auto" loop>
+    <audio id="coach-audio" preload="auto" loop playsinline>
         <source src="https://github.com/panwyyt/280Thread/raw/refs/heads/main/BooWorkOut.wav" type="audio/wav">
     </audio>
 
     <div class="app-container">
         
-        <!-- Setup Screen -->
         <div id="setup-screen" class="neu-panel">
             <h1 class="app-title">น้องบู้ไม่อ้วน</h1>
             <div id="total-time-calc" class="total-time-display">รวมเวลา: 4 นาที 30 วินาที</div>
 
-            <!-- Manual Controls -->
             <div class="setting-row">
                 <div class="label">เวลาลุย (วิ)</div>
                 <div class="controls">
@@ -315,7 +308,6 @@
             <button id="main-btn" class="action-btn" onclick="toggleWorkout()">START</button>
         </div>
 
-        <!-- Workout Screen -->
         <div id="workout-screen" class="timer-view">
             <div id="round-display" class="round-pill">รอบที่ 1 / 6</div>
             
@@ -330,7 +322,6 @@
 
     </div>
 
-    <!-- Hidden SoundCloud -->
     <div class="hidden-player">
         <iframe id="sc-widget" width="100%" height="166" scrolling="no" frameborder="no" allow="autoplay" 
         src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/2047650568&color=%231abc9c&auto_play=false&hide_related=false&show_comments=false&show_user=false&show_reposts=false&loop=true">
@@ -369,8 +360,10 @@
         
         // --- Beep Generator (AudioContext) ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
         function playBeep(freq = 440, type = 'sine', duration = 0.1) {
             if (audioCtx.state === 'suspended') audioCtx.resume();
+            
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.frequency.value = freq;
@@ -380,6 +373,29 @@
             osc.start();
             gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
             osc.stop(audioCtx.currentTime + duration);
+        }
+
+        // --- MOBILE AUDIO FIX: ฟังก์ชันปลดล็อกเสียง ---
+        function unlockAllAudio() {
+            // 1. ปลดล็อก Audio Context
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            // 2. ปลดล็อกเสียงไฟล์ (Coach) - เล่นเงียบๆ แล้วหยุดทันที
+            coachAudio.play().then(() => {
+                coachAudio.pause();
+                coachAudio.currentTime = 0;
+            }).catch(e => console.error("Coach unlock error (ignore if on PC):", e));
+
+            // 3. กระตุ้น SoundCloud (Play แล้ว Pause เร็วๆ)
+            widget.play();
+            setTimeout(() => {
+                // ถ้ายังอยู่ในช่วงเตรียมตัว หรือยังไม่เริ่ม ให้หยุดเพลงไปก่อน
+                if (phase === 'ready' || phase === 'stopped') {
+                    widget.pause();
+                }
+            }, 100);
         }
 
         // --- Initialization ---
@@ -409,16 +425,15 @@
             document.getElementById('total-time-calc').innerText = `รวมเวลา: ${m} นาที ${s} วินาที`;
         }
 
-        // --- Wake Lock API ---
+        // --- Wake Lock API (กันหน้าจอดับ) ---
         async function requestWakeLock() {
             try {
                 wakeLock = await navigator.wakeLock.request('screen');
                 wakeLock.addEventListener('release', () => {
                     console.log('Wake Lock released');
                 });
-                console.log('Wake Lock active');
             } catch (err) {
-                console.error(`${err.name}, ${err.message}`);
+                console.error('Wake Lock failed:', err);
             }
         }
 
@@ -432,18 +447,18 @@
         }
 
         function beginWorkout() {
+            // !!! KEY FIX: เรียกใช้ Unlock Audio ทันทีที่นิ้วกดปุ่ม Start !!!
+            unlockAllAudio();
+
             isRunning = true;
             currentRound = 1;
-            
-            // Activate Audio Context on user gesture
-            if (audioCtx.state === 'suspended') audioCtx.resume();
             
             requestWakeLock();
             
             // UI Transition
             document.getElementById('setup-screen').classList.add('hidden');
             const workoutScreen = document.getElementById('workout-screen');
-            workoutScreen.style.display = 'flex'; // Overlay style
+            workoutScreen.style.display = 'flex'; 
             
             const btn = document.getElementById('main-btn');
             btn.innerText = "STOP";
@@ -503,10 +518,9 @@
                 
                 gifBox.style.display = 'none';
                 
-                // No music/coach in Ready phase
-                widget.pause();
-                coachAudio.pause();
-
+                // Ensure audio is silent during ready
+                // (SoundCloud might play briefly from unlock function, but the timeout there will pause it)
+                
             } else if (phase === 'work') {
                 timeLeft = settings.work;
                 phaseTitle.innerText = "ลุย!";
@@ -517,16 +531,16 @@
 
                 gifBox.classList.remove('hidden');
                 gifBox.style.display = 'flex';
-                // Reset GIF
+                // Reset GIF animation
                 const currentSrc = gifImg.src;
                 gifImg.src = "";
                 gifImg.src = currentSrc;
 
                 // Play Audio
                 widget.play();
-                coachAudio.play().catch(e => console.log(e));
+                coachAudio.play().catch(e => console.log("Play failed:", e));
                 
-                // Whistle/High Beep start
+                // High Beep
                 playBeep(880, 'square', 0.3);
 
             } else if (phase === 'rest') {
@@ -543,7 +557,7 @@
                 widget.pause();
                 coachAudio.pause();
                 
-                // Low Beep start rest
+                // Low Beep
                 playBeep(440, 'sine', 0.3);
             }
 
@@ -555,7 +569,7 @@
                 
                 // Countdown Sound Logic (3-2-1)
                 if (timeLeft > 0 && timeLeft <= 3) {
-                    playBeep(600, 'triangle', 0.1); // Short beep
+                    playBeep(600, 'triangle', 0.1); 
                 }
 
                 if (timeLeft < 0) {
