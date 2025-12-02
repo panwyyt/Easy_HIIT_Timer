@@ -3,11 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>น้องบู้ไม่อ้วน (SoundCloud Fix)</title>
+    <title>น้องบู้ไม่อ้วน (Music Edition)</title>
     <link rel="icon" type="image/jpeg" href="https://raw.githubusercontent.com/panwyyt/280Thread/refs/heads/main/Panthawit's%20Favicon%20Pixled.jpg">
 
-    <script src="https://w.soundcloud.com/player/api.js"></script>
-    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
@@ -37,6 +35,7 @@
             background-color: var(--bg-color);
             color: var(--text-main);
             height: 100vh;
+            /* Fix for mobile viewport height issues */
             min-height: -webkit-fill-available;
             display: flex;
             flex-direction: column;
@@ -90,6 +89,7 @@
             font-weight: 600;
             text-align: center;
             border-radius: 15px;
+            /* Inset Shadow for Inputs */
             box-shadow: inset 5px 5px 10px var(--shadow-dark), 
                         inset -5px -5px 10px var(--shadow-light);
             font-family: inherit;
@@ -157,15 +157,17 @@
             transform: translateY(2px);
         }
 
+        /* Stop Button Mode */
         .action-btn.stop-mode {
             position: fixed;
-            bottom: 30px; 
+            bottom: 30px; /* Safe area from bottom */
             left: 50%;
             transform: translateX(-50%);
             width: 85%;
             max-width: 400px;
             color: var(--red-glow);
             z-index: 100;
+            /* Glassy Background */
             background: rgba(41, 45, 50, 0.95);
             backdrop-filter: blur(5px);
         }
@@ -195,7 +197,7 @@
         }
 
         .phase-badge {
-            font-size: 15vw;
+            font-size: 15vw; /* Responsive font size */
             font-weight: 700;
             margin: 10px 0;
             text-transform: uppercase;
@@ -213,7 +215,7 @@
         }
 
         .timer-big {
-            font-size: 25vw;
+            font-size: 25vw; /* Responsive font size based on viewport width */
             font-weight: 600;
             line-height: 1;
             font-variant-numeric: tabular-nums;
@@ -223,6 +225,7 @@
                         -5px -5px 10px var(--shadow-light);
         }
 
+        /* Limit max font size on desktop */
         @media (min-width: 600px) {
             .timer-big { font-size: 8rem; }
             .phase-badge { font-size: 3.5rem; }
@@ -240,7 +243,7 @@
             height: 40vw;
             max-height: 200px;
             margin: 0 auto;
-            display: none; 
+            display: none; /* Flex when active */
             align-items: center;
             justify-content: center;
         }
@@ -253,8 +256,8 @@
 
         /* Utility */
         .hidden { display: none !important; }
-        .hidden-player { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
         
+        /* Input spin buttons remove */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 
@@ -264,6 +267,10 @@
 
     <audio id="coach-audio" preload="auto" loop playsinline>
         <source src="https://github.com/panwyyt/280Thread/raw/refs/heads/main/BooWorkOut.wav" type="audio/wav">
+    </audio>
+
+    <audio id="bg-music" preload="auto" loop playsinline>
+        <source src="https://github.com/panwyyt/BooNoFat/raw/refs/heads/main/WO_Music.mp3" type="audio/mpeg">
     </audio>
 
     <div class="app-container">
@@ -316,12 +323,6 @@
 
     </div>
 
-    <div class="hidden-player">
-        <iframe id="sc-widget" width="100%" height="166" scrolling="no" frameborder="no" allow="autoplay" 
-        src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/2047650568&color=%231abc9c&auto_play=false&hide_related=false&show_comments=false&show_user=false&show_reposts=false&loop=true">
-        </iframe>
-    </div>
-
     <script>
         // --- Application State ---
         let settings = { work: 30, rest: 15, rounds: 6 };
@@ -329,7 +330,7 @@
         let timeLeft = 0;
         let currentRound = 1;
         let isRunning = false;
-        let phase = 'stopped';
+        let phase = 'stopped'; // stopped, ready, work, rest
         let wakeLock = null;
 
         // --- Quotes ---
@@ -346,11 +347,12 @@
             "วางโทรศัพท์ด่วน!", "เตรียมตัว...", "พร้อมมั้ย?", "เข้าที่..."
         ];
 
-        // --- SoundCloud & Audio ---
-        const iframeElement = document.querySelector('#sc-widget');
-        const widget = SC.Widget(iframeElement);
+        // --- Audio Elements ---
         const coachAudio = document.getElementById('coach-audio');
         coachAudio.volume = 1.0;
+
+        const bgMusic = document.getElementById('bg-music');
+        bgMusic.volume = 0.6; // ปรับความดังเพลง (0.0 - 1.0) เพื่อไม่ให้กลบเสียงโค้ช
         
         // --- Beep Generator (AudioContext) ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -369,23 +371,24 @@
             osc.stop(audioCtx.currentTime + duration);
         }
 
-        // --- MOBILE AUDIO FIX ---
+        // --- MOBILE AUDIO FIX: ฟังก์ชันปลดล็อกเสียงทั้งหมด ---
         function unlockAllAudio() {
-            // 1. Audio Context
+            // 1. ปลดล็อก Audio Context
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
 
-            // 2. Coach Voice: Play & Stop
+            // 2. ปลดล็อกเสียง Coach
             coachAudio.play().then(() => {
                 coachAudio.pause();
                 coachAudio.currentTime = 0;
-            }).catch(e => console.error("Coach error:", e));
+            }).catch(e => console.error("Coach unlock error:", e));
 
-            // 3. SoundCloud: JUST PLAY (สั่งเล่นเลย ไม่ต้องหยุดทันที)
-            // เราจะให้มันเล่นแช่ไว้สัก 0.8 วินาที แล้วค่อยไปหยุดในฟังก์ชั่น startPhase
-            // เพื่อให้ Browser มั่นใจว่า User ตั้งใจฟังจริงๆ
-            widget.play();
+            // 3. ปลดล็อกเสียงเพลง (Music)
+            bgMusic.play().then(() => {
+                bgMusic.pause();
+                bgMusic.currentTime = 0;
+            }).catch(e => console.error("Music unlock error:", e));
         }
 
         // --- Initialization ---
@@ -408,18 +411,22 @@
         }
 
         function updateTotalCalc() {
+            // Formula: (Work + Rest) * Rounds
             let totalSec = (settings.work + settings.rest) * settings.rounds;
             let m = Math.floor(totalSec / 60);
             let s = totalSec % 60;
             document.getElementById('total-time-calc').innerText = `รวมเวลา: ${m} นาที ${s} วินาที`;
         }
 
-        // --- Wake Lock ---
+        // --- Wake Lock API (กันหน้าจอดับ) ---
         async function requestWakeLock() {
             try {
                 wakeLock = await navigator.wakeLock.request('screen');
+                wakeLock.addEventListener('release', () => {
+                    console.log('Wake Lock released');
+                });
             } catch (err) {
-                console.error(err);
+                console.error('Wake Lock failed:', err);
             }
         }
 
@@ -433,7 +440,7 @@
         }
 
         function beginWorkout() {
-            // เรียกใช้ Unlock Audio ทันทีที่กดปุ่ม
+            // !!! KEY FIX: ปลดล็อกเสียงทันทีที่กด Start !!!
             unlockAllAudio();
 
             isRunning = true;
@@ -441,6 +448,7 @@
             
             requestWakeLock();
             
+            // UI Transition
             document.getElementById('setup-screen').classList.add('hidden');
             const workoutScreen = document.getElementById('workout-screen');
             workoutScreen.style.display = 'flex'; 
@@ -450,6 +458,7 @@
             btn.classList.add('stop-mode');
             document.body.appendChild(btn); 
             
+            // Start with Ready Phase
             startPhase('ready');
         }
 
@@ -458,14 +467,19 @@
             clearInterval(timer);
             phase = 'stopped';
             
+            // Release Wake Lock
             if (wakeLock !== null) {
                 wakeLock.release().then(() => { wakeLock = null; });
             }
 
-            widget.pause();
+            // Stop All Audio
             coachAudio.pause();
             coachAudio.currentTime = 0;
+            
+            bgMusic.pause();
+            bgMusic.currentTime = 0;
 
+            // UI Reset
             document.getElementById('setup-screen').classList.remove('hidden');
             document.getElementById('workout-screen').style.display = 'none';
             document.getElementById('gif-box').classList.add('hidden');
@@ -490,37 +504,39 @@
             roundDisp.innerText = `รอบที่ ${currentRound} / ${settings.rounds}`;
 
             if (phase === 'ready') {
-                timeLeft = 5; 
+                timeLeft = 5; // Fixed 5s prep
                 phaseTitle.innerText = "เตรียมตัว";
                 phaseTitle.className = "phase-badge text-yellow";
                 timerDisp.style.color = "var(--yellow-glow)";
+                
                 quoteDisp.innerText = readyQuotes[Math.floor(Math.random() * readyQuotes.length)];
                 
                 gifBox.style.display = 'none';
                 
-                // *** KEY FIX ***
-                // หน่วงเวลาหยุดเพลง 0.8 วินาที เพื่อให้คำสั่ง Play ทำงานสมบูรณ์
-                // (คุณจะได้ยินเสียงเพลงแวบหนึ่ง แล้วเงียบไปเพื่อนับถอยหลัง)
-                setTimeout(() => {
-                    widget.pause();
-                    coachAudio.pause();
-                }, 800);
-
+                // เงียบเสียงช่วงเตรียมตัว
+                coachAudio.pause();
+                bgMusic.pause();
+                
             } else if (phase === 'work') {
                 timeLeft = settings.work;
                 phaseTitle.innerText = "ลุย!";
                 phaseTitle.className = "phase-badge text-cyan";
                 timerDisp.style.color = "var(--cyan-glow)";
+                
                 quoteDisp.innerText = workQuotes[Math.floor(Math.random() * workQuotes.length)];
 
                 gifBox.classList.remove('hidden');
                 gifBox.style.display = 'flex';
+                // Reset GIF animation
                 const currentSrc = gifImg.src;
                 gifImg.src = "";
                 gifImg.src = currentSrc;
 
-                widget.play();
-                coachAudio.play().catch(e => console.log(e));
+                // Play All Audio (Music + Coach)
+                coachAudio.play().catch(e => console.log("Coach Play failed:", e));
+                bgMusic.play().catch(e => console.log("Music Play failed:", e));
+                
+                // High Beep
                 playBeep(880, 'square', 0.3);
 
             } else if (phase === 'rest') {
@@ -528,11 +544,16 @@
                 phaseTitle.innerText = "พัก";
                 phaseTitle.className = "phase-badge text-red";
                 timerDisp.style.color = "var(--red-glow)";
+                
                 quoteDisp.innerText = restQuotes[Math.floor(Math.random() * restQuotes.length)];
 
                 gifBox.style.display = 'none';
-                widget.pause();
+                
+                // Pause All Audio
                 coachAudio.pause();
+                bgMusic.pause();
+                
+                // Low Beep
                 playBeep(440, 'sine', 0.3);
             }
 
@@ -542,6 +563,7 @@
                 timeLeft--;
                 updateTimerText();
                 
+                // Countdown Sound Logic (3-2-1)
                 if (timeLeft > 0 && timeLeft <= 3) {
                     playBeep(600, 'triangle', 0.1); 
                 }
@@ -575,6 +597,7 @@
             document.getElementById('timer-display').innerText = timeLeft;
         }
 
+        // Re-apply Wake Lock on visibility change
         document.addEventListener('visibilitychange', async () => {
             if (wakeLock !== null && document.visibilityState === 'visible') {
                 requestWakeLock();
