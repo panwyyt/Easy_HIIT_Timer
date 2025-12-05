@@ -3,607 +3,261 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>น้องบู้ไม่อ้วน (BooNoFat)</title>
-    <link rel="icon" type="image/jpeg" href="https://raw.githubusercontent.com/panwyyt/280Thread/refs/heads/main/Panthawit's%20Favicon%20Pixled.jpg">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <title>EASY HIIT TIMER</title>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
-
     <style>
         :root {
-            /* Neumorphism Palette (Dark) */
-            --bg-color: #292d32;
-            --shadow-light: #353b41;
-            --shadow-dark: #1d2023;
-            
-            --text-main: #e0e5ec;
-            --text-muted: #8b9bb4;
-            
-            /* Status Colors */
-            --cyan-glow: #00fff2;
-            --red-glow: #ff4d4d;
-            --yellow-glow: #ffd700;
+            --bg-grad: linear-gradient(135deg, #2b1055, #7597de);
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --cyan: #00fff2; --red: #ff4d4d; --yellow: #ffd700;
         }
-
         * { box-sizing: border-box; transition: all 0.3s ease; user-select: none; -webkit-tap-highlight-color: transparent; }
-
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Kanit', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            height: 100vh;
-            /* Fix for mobile viewport height issues */
-            min-height: -webkit-fill-available;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-
-        /* --- Neumorphism Base Styles --- */
-        .neu-panel {
-            background: var(--bg-color);
-            border-radius: 30px;
-            box-shadow: 10px 10px 20px var(--shadow-dark), 
-                       -10px -10px 20px var(--shadow-light);
-            padding: 40px 30px;
-            width: 90%;
-            max-width: 480px;
-            position: relative;
-            z-index: 10;
-        }
-
-        .neu-btn {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            border: none;
-            background: var(--bg-color);
-            color: var(--text-main);
-            font-size: 1.2rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 5px 5px 10px var(--shadow-dark), 
-                       -5px -5px 10px var(--shadow-light);
-        }
-
-        .neu-btn:active {
-            box-shadow: inset 4px 4px 8px var(--shadow-dark), 
-                        inset -4px -4px 8px var(--shadow-light);
-            transform: scale(0.95);
-        }
-
-        .neu-input {
-            width: 60px;
-            height: 45px;
-            border: none;
-            background: var(--bg-color);
-            color: var(--cyan-glow);
-            font-size: 1.3rem;
-            font-weight: 600;
-            text-align: center;
-            border-radius: 15px;
-            /* Inset Shadow for Inputs */
-            box-shadow: inset 5px 5px 10px var(--shadow-dark), 
-                        inset -5px -5px 10px var(--shadow-light);
-            font-family: inherit;
-        }
-
-        .neu-input:focus {
-            outline: none;
-            color: #fff;
-        }
-
-        /* --- Layout --- */
-        .app-title {
-            font-size: 2rem;
-            font-weight: 700;
-            margin: 0 0 10px 0;
-            text-align: center;
-            color: var(--text-main);
-            text-shadow: 2px 2px 4px var(--shadow-dark);
-        }
-
-        .total-time-display {
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-bottom: 25px;
-        }
-
-        .setting-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .label {
-            font-size: 1.1rem;
-            color: var(--text-muted);
-        }
-
-        .controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        /* --- Large Action Button --- */
-        .action-btn {
-            width: 100%;
-            padding: 20px;
-            font-size: 1.5rem;
-            font-weight: 600;
-            border-radius: 20px;
-            border: none;
-            background: var(--bg-color);
-            color: var(--cyan-glow);
-            margin-top: 15px;
-            cursor: pointer;
-            box-shadow: 8px 8px 16px var(--shadow-dark), 
-                       -8px -8px 16px var(--shadow-light);
-        }
-
-        .action-btn:active {
-            box-shadow: inset 4px 4px 8px var(--shadow-dark), 
-                        inset -4px -4px 8px var(--shadow-light);
-            transform: translateY(2px);
-        }
-
-        /* Stop Button Mode */
-        .action-btn.stop-mode {
-            position: fixed;
-            bottom: 30px; /* Safe area from bottom */
-            left: 50%;
-            transform: translateX(-50%);
-            width: 85%;
-            max-width: 400px;
-            color: var(--red-glow);
-            z-index: 100;
-            /* Glassy Background */
-            background: rgba(41, 45, 50, 0.95);
-            backdrop-filter: blur(5px);
-        }
-
-        /* --- Timer View --- */
-        .timer-view {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-evenly; 
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            top: 0; left: 0;
-            background: var(--bg-color);
-            padding-bottom: 110px; 
-            padding-top: 20px;
-        }
-
-        .round-pill {
-            font-size: 1.1rem;
-            color: var(--text-muted);
-            padding: 8px 25px;
-            border-radius: 50px;
-            box-shadow: inset 3px 3px 6px var(--shadow-dark), 
-                        inset -3px -3px 6px var(--shadow-light);
-        }
-
-        .phase-badge {
-            font-size: 15vw; /* Responsive font size */
-            font-weight: 700;
-            margin: 10px 0;
-            text-transform: uppercase;
-            line-height: 1.2;
-        }
+        body { margin: 0; font-family: 'Kanit', sans-serif; background: var(--bg-grad); color: #fff; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
         
-        .quote-text {
-            font-size: 1rem;
-            color: var(--text-muted);
-            margin-bottom: 5px;
-            height: 25px;
-            font-style: italic;
-            padding: 0 20px;
-            text-align: center;
-        }
-
-        .timer-big {
-            font-size: 25vw; /* Responsive font size based on viewport width */
-            font-weight: 600;
-            line-height: 1;
-            font-variant-numeric: tabular-nums;
-            margin: 0;
-            color: var(--text-main);
-            text-shadow: 5px 5px 10px var(--shadow-dark), 
-                        -5px -5px 10px var(--shadow-light);
-        }
-
-        /* Limit max font size on desktop */
-        @media (min-width: 600px) {
-            .timer-big { font-size: 8rem; }
-            .phase-badge { font-size: 3.5rem; }
-        }
-
-        /* --- Text Colors per Phase --- */
-        .text-cyan { color: var(--cyan-glow); text-shadow: 0 0 15px rgba(0,255,242,0.3); }
-        .text-red { color: var(--red-glow); text-shadow: 0 0 15px rgba(255,77,77,0.3); }
-        .text-yellow { color: var(--yellow-glow); text-shadow: 0 0 15px rgba(255,215,0,0.3); }
-
-        /* --- GIF Container --- */
-        .gif-container {
-            width: 60vw;
-            max-width: 280px;
-            height: 40vw;
-            max-height: 200px;
-            margin: 0 auto;
-            display: none; /* Flex when active */
-            align-items: center;
-            justify-content: center;
-        }
-        .gif-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            filter: drop-shadow(0 0 10px var(--cyan-glow));
-        }
-
-        /* Utility */
-        .hidden { display: none !important; }
+        /* Layout Handling via State Classes */
+        body.view-workout #setup-screen { display: none; }
+        body.view-workout #workout-screen { display: flex; }
         
-        /* Input spin buttons remove */
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        /* Party Mode Animation */
+        @keyframes flow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .party-mode { background: linear-gradient(-45deg, #ff0000, #990000, #ff3333, #cc0000); background-size: 400% 400%; animation: flow 10s ease infinite; }
 
+        /* UI Components */
+        .neu-panel { background: var(--glass-bg); border-radius: 30px; border: 1px solid var(--glass-border); backdrop-filter: blur(10px); padding: 40px 30px; width: 90%; max-width: 500px; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+        .setting-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-size: 1.1rem; }
+        .controls { display: flex; gap: 10px; }
+        
+        .neu-btn { width: 45px; height: 45px; border-radius: 50%; border: 1px solid var(--glass-border); background: var(--glass-bg); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .neu-btn:active { transform: scale(0.95); background: rgba(255,255,255,0.2); }
+        
+        .neu-input { width: 60px; height: 45px; border: 1px solid var(--glass-border); background: var(--glass-bg); color: var(--cyan); text-align: center; border-radius: 15px; font-size: 1.3rem; font-weight: 600; font-family: inherit; }
+        .neu-input:focus { outline: none; background: rgba(255,255,255,0.2); }
+        input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+        /* Main Button */
+        .action-btn { width: 100%; padding: 20px; font-size: 1.5rem; font-weight: 600; border-radius: 20px; border: 1px solid var(--glass-border); background: var(--glass-bg); color: var(--cyan); margin-top: 15px; cursor: pointer; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+        
+        /* Stop Button State */
+        body.view-workout .action-btn { position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%); width: 85%; max-width: 400px; background: rgba(255, 0, 0, 0.2); color: var(--red); z-index: 100; }
+
+        /* Mute Button */
+        .mute-btn-fixed { position: fixed; top: 20px; right: 20px; z-index: 200; }
+        .mute-line { display: none; }
+        .muted .mute-line { display: block; }
+        .muted { color: var(--red); border-color: var(--red); }
+
+        /* Workout Screen */
+        #workout-screen { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; position: absolute; top: 0; }
+        .round-pill { padding: 8px 25px; border-radius: 50px; background: var(--glass-bg); border: 1px solid var(--glass-border); margin-bottom: 20px; }
+        .phase-badge { font-size: 4rem; font-weight: 700; text-transform: uppercase; text-shadow: 0 0 20px currentColor; }
+        .timer-big { font-size: 25vw; font-weight: 600; line-height: 1; text-shadow: 0 0 30px rgba(255,255,255,0.8); }
+        @media (min-width: 600px) { .timer-big { font-size: 10rem; } }
+        
+        .text-cyan { color: var(--cyan); } .text-red { color: var(--red); } .text-yellow { color: var(--yellow); }
+        .footer-credit { margin-top: 25px; font-size: 0.8rem; color: #a0a0a0; }
+        .footer-credit a { color: #fff; text-decoration: none; border-bottom: 1px dotted #fff; }
     </style>
 </head>
 <body>
 
-    <audio id="coach-audio" preload="auto" loop playsinline>
-        <source src="https://github.com/panwyyt/280Thread/raw/refs/heads/main/BooWorkOut.wav" type="audio/wav">
-    </audio>
+    <button id="mute-btn" class="neu-btn mute-btn-fixed" onclick="toggleMute()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            <line x1="23" y1="9" x2="17" y2="15" class="mute-line"></line>
+            <line x1="17" y1="9" x2="23" y2="15" class="mute-line"></line>
+        </svg>
+    </button>
 
-    <audio id="bg-music" preload="auto" loop playsinline>
-        <source src="https://github.com/panwyyt/BooNoFat/raw/refs/heads/main/WO_Music.mp3" type="audio/mpeg">
-    </audio>
+    <div id="setup-screen" class="neu-panel">
+        <h1 style="margin: 0 0 10px;">EASY HIIT</h1>
+        <div id="total-time-calc" style="color:#a0a0a0; margin-bottom: 25px;">รวมเวลา: --:--</div>
 
-    <div class="app-container">
-        
-        <div id="setup-screen" class="neu-panel">
-            <h1 class="app-title">น้องบู้ไม่อ้วน<br>(BooNoFat)</h1>
-            <div id="total-time-calc" class="total-time-display">รวมเวลา: 4 นาที 30 วินาที</div>
+        <div id="settings-container"></div>
 
-            <div class="setting-row">
-                <div class="label">เวลาลุย (วิ)</div>
-                <div class="controls">
-                    <button class="neu-btn" onclick="adjust('work', -5)">-</button>
-                    <input type="number" id="val-work" class="neu-input" value="30" onchange="manualInput('work', this.value)">
-                    <button class="neu-btn" onclick="adjust('work', 5)">+</button>
-                </div>
-            </div>
+        <button id="main-btn" class="action-btn" onclick="toggleWorkout()">START</button>
+        <div class="footer-credit">Created by <a href="https://www.instagram.com/mylilboo/" target="_blank">mylilboo</a></div>
+    </div>
 
-            <div class="setting-row">
-                <div class="label">เวลาพัก (วิ)</div>
-                <div class="controls">
-                    <button class="neu-btn" onclick="adjust('rest', -5)">-</button>
-                    <input type="number" id="val-rest" class="neu-input" value="15" onchange="manualInput('rest', this.value)">
-                    <button class="neu-btn" onclick="adjust('rest', 5)">+</button>
-                </div>
-            </div>
-
-            <div class="setting-row">
-                <div class="label">จำนวนรอบ</div>
-                <div class="controls">
-                    <button class="neu-btn" onclick="adjust('rounds', -1)">-</button>
-                    <input type="number" id="val-rounds" class="neu-input" value="6" onchange="manualInput('rounds', this.value)">
-                    <button class="neu-btn" onclick="adjust('rounds', 1)">+</button>
-                </div>
-            </div>
-
-            <button id="main-btn" class="action-btn" onclick="toggleWorkout()">START</button>
-        </div>
-
-        <div id="workout-screen" class="timer-view">
-            <div id="round-display" class="round-pill">รอบที่ 1 / 6</div>
-            
-            <div id="gif-box" class="gif-container hidden">
-                <img id="ghost-img" src="https://raw.githubusercontent.com/panwyyt/BooNoFat/refs/heads/main/DanceBoo.gif" alt="Ghost Animation">
-            </div>
-
-            <div id="phase-title" class="phase-badge text-cyan">ลุย!</div>
-            <div id="quote-display" class="quote-text">...</div>
-            <div id="timer-display" class="timer-big">30</div>
-        </div>
-
+    <div id="workout-screen">
+        <div id="round-display" class="round-pill"></div>
+        <div id="phase-title" class="phase-badge text-cyan"></div>
+        <div id="quote-display" style="height: 25px; font-style: italic; margin-bottom: 5px;"></div>
+        <div id="timer-display" class="timer-big"></div>
     </div>
 
     <script>
-        // --- Application State ---
-        let settings = { work: 30, rest: 15, rounds: 6 };
-        let timer = null;
-        let timeLeft = 0;
-        let currentRound = 1;
-        let isRunning = false;
-        let phase = 'stopped'; // stopped, ready, work, rest
-        let wakeLock = null;
+        // --- State & Config ---
+        let state = { work: 30, rest: 15, rounds: 6, speedLevel: 3 };
+        let app = { timer: null, timeLeft: 0, currentRound: 1, isRunning: false, phase: 'stopped', muted: false, wakeLock: null, audioCtx: new (window.AudioContext || window.webkitAudioContext)() };
+        const quotes = {
+            work: ["โยกหัวหลุด!", "เอาให้ตาแตก!", "เร็วกว่านี้!", "ไฟลุกแล้ววว!"],
+            rest: ["พักสายตาเถอะนะ", "หายใจเข้า...", "นิ่งๆ ไว้", "เตรียมระเบิดพลัง"],
+            ready: ["เตรียมตัวแสบตา...", "พร้อมมั้ย?", "3.. 2.. 1.."]
+        };
 
-        // --- Quotes ---
-        const workQuotes = [
-            "เอาไขมันออกไป!", "เพื่อชาบูมื้อเย็น!", "อย่าอู้! น้องบู้เห็นนะ", 
-            "ขยับตัวหน่อยซิแม่", "ผอมแน่รอบนี้!", "เบิร์นเข้าไป!", 
-            "สู้เขาสิวะอิหญิง!", "ฮึบๆ อีกนิดเดียว"
-        ];
-        const restQuotes = [
-            "หายใจลึกๆ จ้า", "จิบน้ำได้นิดนึง", "ห้ามตายนะ", 
-            "เตรียมตัวรอบต่อไป", "อย่าเพิ่งนอนยาวนะ", "เช็ดเหงื่อแปป"
-        ];
-        const readyQuotes = [
-            "วางโทรศัพท์ด่วน!", "เตรียมตัว...", "พร้อมมั้ย?", "เข้าที่..."
+        // --- Render UI Settings (Dynamic Generation to reduce HTML bloat) ---
+        const configMap = [
+            { id: 'work', label: 'เวลาลุย (วิ)', step: 5, min: 5 },
+            { id: 'rest', label: 'เวลาพัก (วิ)', step: 5, min: 0 },
+            { id: 'rounds', label: 'จำนวนรอบ', step: 1, min: 1 },
+            { id: 'speedLevel', label: 'ความเร็วเสียง', step: 1, min: 1, max: 5, readonly: true }
         ];
 
-        // --- Audio Elements ---
-        const coachAudio = document.getElementById('coach-audio');
-        coachAudio.volume = 1.0;
-
-        const bgMusic = document.getElementById('bg-music');
-        bgMusic.volume = 0.6; // ปรับความดังเพลง (0.0 - 1.0)
-        
-        // --- Beep Generator (AudioContext) ---
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        function playBeep(freq = 440, type = 'sine', duration = 0.1) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.frequency.value = freq;
-            osc.type = type;
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
-            osc.stop(audioCtx.currentTime + duration);
-        }
-
-        // --- MOBILE AUDIO FIX: ฟังก์ชันปลดล็อกเสียงทั้งหมด ---
-        function unlockAllAudio() {
-            // 1. ปลดล็อก Audio Context
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-
-            // 2. ปลดล็อกเสียง Coach
-            coachAudio.play().then(() => {
-                coachAudio.pause();
-                coachAudio.currentTime = 0;
-            }).catch(e => console.error("Coach unlock error:", e));
-
-            // 3. ปลดล็อกเสียงเพลง (Music)
-            bgMusic.play().then(() => {
-                bgMusic.pause();
-                bgMusic.currentTime = 0;
-            }).catch(e => console.error("Music unlock error:", e));
-        }
-
-        // --- Initialization ---
+        const container = document.getElementById('settings-container');
+        configMap.forEach(cfg => {
+            container.innerHTML += `
+            <div class="setting-row">
+                <div>${cfg.label}</div>
+                <div class="controls">
+                    <button class="neu-btn" onclick="adjust('${cfg.id}', -${cfg.step})">-</button>
+                    <input type="number" id="val-${cfg.id}" class="neu-input" value="${state[cfg.id]}" 
+                           onchange="adjust('${cfg.id}', 0, this.value)" ${cfg.readonly ? 'readonly' : ''}>
+                    <button class="neu-btn" onclick="adjust('${cfg.id}', ${cfg.step})">+</button>
+                </div>
+            </div>`;
+        });
         updateTotalCalc();
 
-        // --- Input Handling ---
-        function adjust(key, amount) {
-            settings[key] += amount;
-            if (settings[key] < 1) settings[key] = 1; 
-            document.getElementById(`val-${key}`).value = settings[key];
-            updateTotalCalc();
-        }
-
-        function manualInput(key, value) {
-            let val = parseInt(value);
-            if (isNaN(val) || val < 1) val = 1;
-            settings[key] = val;
+        // --- Core Functions ---
+        function adjust(key, delta, manualVal = null) {
+            let val = manualVal !== null ? parseInt(manualVal) : state[key] + delta;
+            // Bounds checking
+            const conf = configMap.find(c => c.id === key);
+            if (val < (conf.min || 1)) val = conf.min || 1;
+            if (conf.max && val > conf.max) val = conf.max;
+            
+            state[key] = val;
             document.getElementById(`val-${key}`).value = val;
             updateTotalCalc();
         }
 
         function updateTotalCalc() {
-            // Formula: (Work + Rest) * Rounds
-            let totalSec = (settings.work + settings.rest) * settings.rounds;
-            let m = Math.floor(totalSec / 60);
-            let s = totalSec % 60;
-            document.getElementById('total-time-calc').innerText = `รวมเวลา: ${m} นาที ${s} วินาที`;
+            let total = (state.work + state.rest) * state.rounds;
+            document.getElementById('total-time-calc').innerText = `รวมเวลา: ${Math.floor(total / 60)} นาที ${total % 60} วินาที`;
         }
 
-        // --- Wake Lock API (กันหน้าจอดับ) ---
-        async function requestWakeLock() {
-            try {
-                wakeLock = await navigator.wakeLock.request('screen');
-                wakeLock.addEventListener('release', () => {
-                    console.log('Wake Lock released');
-                });
-            } catch (err) {
-                console.error('Wake Lock failed:', err);
-            }
+        // --- Audio Logic ---
+        function playBeep(freq = 440, type = 'square') {
+            if (app.muted) return;
+            if (app.audioCtx.state === 'suspended') app.audioCtx.resume();
+            const osc = app.audioCtx.createOscillator();
+            const gain = app.audioCtx.createGain();
+            osc.connect(gain); gain.connect(app.audioCtx.destination);
+            osc.frequency.value = freq; osc.type = type;
+            gain.gain.setValueAtTime(0.5, app.audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, app.audioCtx.currentTime + 0.1);
+            osc.start(); osc.stop(app.audioCtx.currentTime + 0.1);
         }
 
-        // --- Main Logic ---
-        function toggleWorkout() {
-            if (isRunning) {
-                endWorkout();
+        let soundLoop;
+        function setPartyMode(active) {
+            const body = document.body;
+            if (active) {
+                body.classList.add('party-mode');
+                clearInterval(soundLoop);
+                let delay = 600 - (state.speedLevel * 100);
+                soundLoop = setInterval(() => playBeep(880, 'sawtooth'), delay);
             } else {
-                beginWorkout();
+                body.classList.remove('party-mode');
+                clearInterval(soundLoop);
             }
         }
 
-        function beginWorkout() {
-            // !!! KEY FIX: ปลดล็อกเสียงทันทีที่กด Start !!!
-            unlockAllAudio();
-
-            isRunning = true;
-            currentRound = 1;
+        // --- Main Workflow ---
+        async function toggleWorkout() {
+            if (app.isRunning) return stopWorkout();
             
-            requestWakeLock();
+            // Start
+            app.isRunning = true;
+            app.currentRound = 1;
+            document.body.classList.add('view-workout'); // Switch View CSS
+            document.getElementById('main-btn').innerText = "STOP";
             
-            // UI Transition
-            document.getElementById('setup-screen').classList.add('hidden');
-            const workoutScreen = document.getElementById('workout-screen');
-            workoutScreen.style.display = 'flex'; 
-            
-            const btn = document.getElementById('main-btn');
-            btn.innerText = "STOP";
-            btn.classList.add('stop-mode');
-            document.body.appendChild(btn); 
-            
-            // Start with Ready Phase
+            try { app.wakeLock = await navigator.wakeLock.request('screen'); } catch(e){}
             startPhase('ready');
         }
 
-        function endWorkout() {
-            isRunning = false;
-            clearInterval(timer);
-            phase = 'stopped';
+        function stopWorkout() {
+            app.isRunning = false;
+            clearInterval(app.timer);
+            setPartyMode(false);
+            if (app.wakeLock) app.wakeLock.release();
             
-            // Release Wake Lock
-            if (wakeLock !== null) {
-                wakeLock.release().then(() => { wakeLock = null; });
-            }
-
-            // Stop All Audio
-            coachAudio.pause();
-            coachAudio.currentTime = 0;
-            
-            bgMusic.pause();
-            bgMusic.currentTime = 0;
-
-            // UI Reset
-            document.getElementById('setup-screen').classList.remove('hidden');
-            document.getElementById('workout-screen').style.display = 'none';
-            document.getElementById('gif-box').classList.add('hidden');
-
-            const btn = document.getElementById('main-btn');
-            btn.innerText = "START";
-            btn.classList.remove('stop-mode');
-            document.getElementById('setup-screen').appendChild(btn); 
+            document.body.classList.remove('view-workout'); // Switch View CSS
+            document.getElementById('main-btn').innerText = "START";
         }
 
-        function startPhase(newPhase) {
-            phase = newPhase;
-            clearInterval(timer);
+        function startPhase(phase) {
+            app.phase = phase;
+            clearInterval(app.timer);
             
-            const roundDisp = document.getElementById('round-display');
-            const gifBox = document.getElementById('gif-box');
-            const gifImg = document.getElementById('ghost-img');
-            const phaseTitle = document.getElementById('phase-title');
-            const quoteDisp = document.getElementById('quote-display');
-            const timerDisp = document.getElementById('timer-display');
+            const els = {
+                round: document.getElementById('round-display'),
+                title: document.getElementById('phase-title'),
+                quote: document.getElementById('quote-display'),
+                timer: document.getElementById('timer-display')
+            };
 
-            roundDisp.innerText = `รอบที่ ${currentRound} / ${settings.rounds}`;
-
+            els.round.innerText = `รอบที่ ${app.currentRound} / ${state.rounds}`;
+            
+            // Config Phase
+            let duration, color, titleText, quoteList, party = false;
             if (phase === 'ready') {
-                timeLeft = 5; // Fixed 5s prep
-                phaseTitle.innerText = "เตรียมตัว";
-                phaseTitle.className = "phase-badge text-yellow";
-                timerDisp.style.color = "var(--yellow-glow)";
-                
-                quoteDisp.innerText = readyQuotes[Math.floor(Math.random() * readyQuotes.length)];
-                
-                gifBox.style.display = 'none';
-                
-                // เงียบเสียงช่วงเตรียมตัว
-                coachAudio.pause();
-                bgMusic.pause();
-                
+                duration = 5; color = 'var(--yellow)'; titleText = 'เตรียมตัว'; quoteList = quotes.ready;
             } else if (phase === 'work') {
-                timeLeft = settings.work;
-                phaseTitle.innerText = "ลุย!";
-                phaseTitle.className = "phase-badge text-cyan";
-                timerDisp.style.color = "var(--cyan-glow)";
-                
-                quoteDisp.innerText = workQuotes[Math.floor(Math.random() * workQuotes.length)];
-
-                gifBox.classList.remove('hidden');
-                gifBox.style.display = 'flex';
-                // Reset GIF animation
-                const currentSrc = gifImg.src;
-                gifImg.src = "";
-                gifImg.src = currentSrc;
-
-                // Play All Audio (Music + Coach)
-                coachAudio.play().catch(e => console.log("Coach Play failed:", e));
-                bgMusic.play().catch(e => console.log("Music Play failed:", e));
-                
-                // High Beep
-                playBeep(880, 'square', 0.3);
-
-            } else if (phase === 'rest') {
-                timeLeft = settings.rest;
-                phaseTitle.innerText = "พัก";
-                phaseTitle.className = "phase-badge text-red";
-                timerDisp.style.color = "var(--red-glow)";
-                
-                quoteDisp.innerText = restQuotes[Math.floor(Math.random() * restQuotes.length)];
-
-                gifBox.style.display = 'none';
-                
-                // Pause All Audio
-                coachAudio.pause();
-                bgMusic.pause();
-                
-                // Low Beep
-                playBeep(440, 'sine', 0.3);
+                duration = state.work; color = 'var(--cyan)'; titleText = 'ลุย!'; quoteList = quotes.work; party = true;
+            } else { // rest
+                duration = state.rest; color = 'var(--red)'; titleText = 'พัก'; quoteList = quotes.rest;
             }
 
-            updateTimerText();
+            app.timeLeft = duration;
+            els.title.innerText = titleText;
+            els.title.className = `phase-badge`; // Reset class
+            els.title.style.color = color;
+            els.timer.style.color = color;
+            els.quote.innerText = quoteList[Math.floor(Math.random() * quoteList.length)];
+            
+            setPartyMode(party);
+            updateTimerDisplay();
 
-            timer = setInterval(() => {
-                timeLeft--;
-                updateTimerText();
-                
-                // Countdown Sound Logic (3-2-1)
-                if (timeLeft > 0 && timeLeft <= 3) {
-                    playBeep(600, 'triangle', 0.1); 
-                }
-
-                if (timeLeft < 0) {
-                    nextPhase();
-                }
+            app.timer = setInterval(() => {
+                app.timeLeft--;
+                updateTimerDisplay();
+                if (app.timeLeft < 0) nextPhase();
             }, 1000);
         }
 
         function nextPhase() {
-            if (phase === 'ready') {
-                startPhase('work');
-            } else if (phase === 'work') {
-                if (currentRound === settings.rounds && settings.rest === 0) {
-                    endWorkout(); 
-                } else {
-                    startPhase('rest');
-                }
-            } else if (phase === 'rest') {
-                if (currentRound < settings.rounds) {
-                    currentRound++;
-                    startPhase('work');
-                } else {
-                    endWorkout();
-                }
+            if (app.phase === 'ready') return startPhase('work');
+            if (app.phase === 'work') {
+                if (app.currentRound >= state.rounds && state.rest === 0) return stopWorkout();
+                if (app.currentRound >= state.rounds) return stopWorkout(); // End after last work if you prefer
+                return startPhase('rest');
+            }
+            if (app.phase === 'rest') {
+                app.currentRound++;
+                if (app.currentRound > state.rounds) return stopWorkout();
+                return startPhase('work');
             }
         }
 
-        function updateTimerText() {
-            document.getElementById('timer-display').innerText = timeLeft;
+        function updateTimerDisplay() {
+            document.getElementById('timer-display').innerText = app.timeLeft;
         }
 
-        // Re-apply Wake Lock on visibility change
+        function toggleMute() {
+            app.muted = !app.muted;
+            document.getElementById('mute-btn').classList.toggle('muted', app.muted);
+        }
+        
+        // Re-acquire wake lock if tab changed
         document.addEventListener('visibilitychange', async () => {
-            if (wakeLock !== null && document.visibilityState === 'visible') {
-                requestWakeLock();
+            if (app.isRunning && document.visibilityState === 'visible') {
+                try { app.wakeLock = await navigator.wakeLock.request('screen'); } catch(e){}
             }
         });
-
     </script>
 </body>
 </html>
