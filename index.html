@@ -2,365 +2,520 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EASY HIIT TIMER</title>
-    <link rel="icon" href="https://avatars.githubusercontent.com/u/86871974?v=4" type="image/x-icon">
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Apple Style HIIT</title>
     <style>
         :root {
-            --bg-grad: linear-gradient(135deg, #2b1055, #7597de);
-            --glass-bg: rgba(255, 255, 255, 0.1);
-            --glass-border: rgba(255, 255, 255, 0.2);
-            --cyan: #00fff2; --red: #ff4d4d; --yellow: #ffd700; --green: #00ff88;
+            --bg-color: #000000;
+            --card-bg: #1C1C1E;
+            --primary-green: #30D158;
+            --primary-orange: #FF453A;
+            --primary-blue: #0A84FF;
+            --text-primary: #FFFFFF;
+            --text-secondary: #8E8E93;
+            --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Rounded", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --ease-apple: cubic-bezier(0.25, 1, 0.5, 1);
         }
-        * { box-sizing: border-box; transition: all 0.3s ease; user-select: none; -webkit-tap-highlight-color: transparent; }
-        body { margin: 0; font-family: 'Kanit', sans-serif; background: var(--bg-grad); color: #fff; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
-        
-        /* Layout Handling */
-        body.view-workout #setup-screen { display: none; }
-        body.view-workout #workout-screen { display: flex; }
-        
-        /* Party Mode Animation */
-        @keyframes flow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-        .party-mode { background: linear-gradient(-45deg, #ff0000, #990000, #ff3333, #cc0000); background-size: 400% 400%; animation: flow 10s ease infinite; }
 
-        /* UI Components */
-        .neu-panel { background: var(--glass-bg); border-radius: 30px; border: 1px solid var(--glass-border); backdrop-filter: blur(10px); padding: 40px 30px; width: 90%; max-width: 500px; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
-        .setting-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-size: 1.1rem; }
-        .controls { display: flex; gap: 10px; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
-        .neu-btn { width: 45px; height: 45px; border-radius: 50%; border: 1px solid var(--glass-border); background: var(--glass-bg); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-        .neu-btn:active { transform: scale(0.95); background: rgba(255,255,255,0.2); }
-        
-        .neu-input { width: 60px; height: 45px; border: 1px solid var(--glass-border); background: var(--glass-bg); color: var(--cyan); text-align: center; border-radius: 15px; font-size: 1.3rem; font-weight: 600; font-family: inherit; }
-        .neu-input:focus { outline: none; background: rgba(255,255,255,0.2); }
-        input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-
-        /* Main Start Button */
-        .action-btn { width: 100%; padding: 20px; font-size: 1.5rem; font-weight: 600; border-radius: 20px; border: 1px solid var(--glass-border); background: var(--glass-bg); color: var(--cyan); margin-top: 15px; cursor: pointer; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
-        .action-btn:hover { background: rgba(255,255,255,0.15); }
-
-        /* Control Bar (Pause/Stop) */
-        .control-bar {
-            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
-            display: flex; gap: 20px; width: 85%; max-width: 400px; z-index: 100;
+        body {
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-stack);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
-        .ctrl-btn {
-            flex: 1; padding: 15px; border-radius: 20px; border: 1px solid var(--glass-border);
-            font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
-            backdrop-filter: blur(5px); box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+
+        /* --- Header --- */
+        header {
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: absolute;
+            top: 0;
+            width: 100%;
+            z-index: 10;
         }
-        .btn-stop { background: rgba(255, 77, 77, 0.2); color: var(--red); }
-        .btn-pause { background: rgba(255, 215, 0, 0.2); color: var(--yellow); }
-        .btn-resume { background: rgba(0, 255, 136, 0.2); color: var(--green); }
-
-        /* Mute Button */
-        .mute-btn-fixed { position: fixed; top: 20px; right: 20px; z-index: 200; }
-        .mute-line { display: none; }
-        .muted .mute-line { display: block; }
-        .muted { color: var(--red); border-color: var(--red); }
-
-        /* Workout Screen */
-        #workout-screen { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; position: absolute; top: 0; }
-        .round-pill { padding: 8px 25px; border-radius: 50px; background: var(--glass-bg); border: 1px solid var(--glass-border); margin-bottom: 20px; }
-        .phase-badge { font-size: 4rem; font-weight: 700; text-transform: uppercase; text-shadow: 0 0 20px currentColor; text-align: center; }
-        .timer-big { font-size: 25vw; font-weight: 600; line-height: 1; text-shadow: 0 0 30px rgba(255,255,255,0.8); margin: 10px 0; }
-        .paused-text { font-size: 1.2rem; letter-spacing: 2px; color: var(--yellow); opacity: 0; transition: opacity 0.3s; margin-top: -20px; margin-bottom: 20px;}
-        body.is-paused .paused-text { opacity: 1; animation: blink 1.5s infinite; }
-        body.is-paused .timer-big { opacity: 0.5; }
-
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-        @media (min-width: 600px) { .timer-big { font-size: 10rem; } }
         
-        .footer-credit { margin-top: 25px; font-size: 0.8rem; color: #a0a0a0; }
-        .footer-credit a { color: #fff; text-decoration: none; border-bottom: 1px dotted #fff; }
+        h1 {
+            font-size: 17px;
+            font-weight: 600;
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+
+        .icon-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: var(--text-primary);
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s var(--ease-apple);
+        }
+        .icon-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.2); }
+        .muted-state line { display: block; }
+        .muted-state { color: var(--text-secondary); }
+
+        /* --- Setup View (Wallet Cards Style) --- */
+        #setup-view {
+            flex: 1;
+            padding: 80px 24px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            transition: transform 0.6s var(--ease-apple), opacity 0.4s;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .setting-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            height: 160px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .setting-card.full-width { grid-column: span 2; height: auto; flex-direction: row; padding: 24px; }
+
+        .setting-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            width: 100%;
+            text-align: left;
+        }
+
+        .setting-value {
+            font-size: 42px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            margin: 10px 0;
+        }
+        
+        .unit { font-size: 16px; color: var(--text-secondary); font-weight: 500; margin-left: 4px; }
+
+        .stepper {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 4px;
+        }
+
+        .step-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            width: 40px; height: 32px;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+        .step-btn:active { background: rgba(255,255,255,0.1); }
+
+        .total-time-pill {
+            background: #000;
+            border: 1px solid #333;
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin: 0 auto 30px;
+            display: inline-block;
+        }
+
+        /* --- Apple Pay Style Button --- */
+        .start-btn {
+            width: 100%;
+            height: 56px;
+            background: var(--primary-green);
+            border: none;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 600;
+            color: #000;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transform: scale(1);
+            transition: transform 0.2s var(--ease-apple), filter 0.2s;
+            box-shadow: 0 4px 20px rgba(48, 209, 88, 0.3);
+        }
+        .start-btn:active { transform: scale(0.96); filter: brightness(0.9); }
+        .start-btn svg { width: 20px; height: 20px; }
+
+        /* --- Workout View (Apple Watch Ultra Style) --- */
+        #workout-view {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.9);
+            transition: all 0.5s var(--ease-apple);
+            z-index: 20;
+        }
+        
+        body.active-workout #setup-view { opacity: 0; transform: scale(0.95); }
+        body.active-workout #workout-view { opacity: 1; pointer-events: auto; transform: scale(1); }
+
+        /* Progress Ring Container */
+        .ring-container {
+            position: relative;
+            width: 320px;
+            height: 320px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.1s linear, stroke 0.3s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        .timer-content {
+            position: absolute;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .phase-label {
+            font-size: 24px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 0;
+        }
+
+        .main-timer {
+            font-size: 110px;
+            font-weight: 700;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -2px;
+        }
+
+        .round-info {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin-top: 10px;
+            font-weight: 500;
+            background: #1C1C1E;
+            padding: 6px 16px;
+            border-radius: 20px;
+        }
+
+        /* Controls Bottom Sheet */
+        .control-dock {
+            position: absolute;
+            bottom: 50px;
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .dock-btn {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .dock-btn:active { transform: scale(0.9); }
+        
+        .btn-stop { background: rgba(255, 69, 58, 0.2); color: var(--primary-orange); }
+        .btn-play { background: rgba(48, 209, 88, 0.2); color: var(--primary-green); }
+        .btn-pause { background: rgba(255, 159, 10, 0.2); color: #FF9F0A; }
+
+        .btn-icon { width: 32px; height: 32px; fill: currentColor; }
+
+        /* Dynamic Colors for Phases */
+        .phase-work .main-timer, .phase-work .phase-label { color: var(--primary-green); }
+        .phase-rest .main-timer, .phase-rest .phase-label { color: var(--primary-orange); }
+        .phase-ready .main-timer, .phase-ready .phase-label { color: var(--primary-blue); }
+
+        /* Pulse Animation (Subtle Apple Style) */
+        @keyframes subtle-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(48, 209, 88, 0.4); }
+            70% { box-shadow: 0 0 0 20px rgba(48, 209, 88, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(48, 209, 88, 0); }
+        }
+        .pulsing { animation: subtle-pulse 2s infinite; border-radius: 50%; }
+
     </style>
 </head>
 <body>
 
-    <button id="mute-btn" class="neu-btn mute-btn-fixed" onclick="toggleMute()">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-            <line x1="23" y1="9" x2="17" y2="15" class="mute-line"></line>
-            <line x1="17" y1="9" x2="23" y2="15" class="mute-line"></line>
-        </svg>
-    </button>
+    <header>
+        <h1>HIIT Timer</h1>
+        <button id="mute-btn" class="icon-btn" onclick="toggleMute()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                <line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" stroke-width="2" style="display:none" class="mute-strike"/>
+            </svg>
+        </button>
+    </header>
 
-    <div id="setup-screen" class="neu-panel">
-        <h1 style="margin: 0 0 10px;">EASY HIIT TIMER</h1>
-        <div id="total-time-calc" style="color:#a0a0a0; margin-bottom: 25px;">รวมเวลา: --:--</div>
+    <div id="setup-view">
+        <div style="text-align: center;">
+            <div id="total-calc" class="total-time-pill">Total: 12 min</div>
+        </div>
 
-        <div id="settings-container"></div>
+        <div class="settings-grid">
+            <div class="setting-card">
+                <div class="setting-label" style="color: var(--primary-green);">Work</div>
+                <div class="setting-value"><span id="val-work">30</span><span class="unit">s</span></div>
+                <div class="stepper">
+                    <button class="step-btn" onclick="adjust('work', -5)">-</button>
+                    <button class="step-btn" onclick="adjust('work', 5)">+</button>
+                </div>
+            </div>
 
-        <button id="main-btn" class="action-btn" onclick="startWorkout()">START WORKOUT</button>
-        <div class="footer-credit">Created with ❤️ by <a href="https://www.instagram.com/mylilboo/" target="_blank">mylilboo</a></div>
+            <div class="setting-card">
+                <div class="setting-label" style="color: var(--primary-orange);">Rest</div>
+                <div class="setting-value"><span id="val-rest">15</span><span class="unit">s</span></div>
+                <div class="stepper">
+                    <button class="step-btn" onclick="adjust('rest', -5)">-</button>
+                    <button class="step-btn" onclick="adjust('rest', 5)">+</button>
+                </div>
+            </div>
+
+            <div class="setting-card full-width">
+                <div style="display: flex; flex-direction: column; align-items: flex-start;">
+                    <div class="setting-label">Rounds</div>
+                    <div class="setting-value"><span id="val-rounds">6</span></div>
+                </div>
+                <div class="stepper" style="width: 120px;">
+                    <button class="step-btn" onclick="adjust('rounds', -1)">-</button>
+                    <button class="step-btn" onclick="adjust('rounds', 1)">+</button>
+                </div>
+            </div>
+        </div>
+
+        <button class="start-btn" onclick="startWorkout()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            Start Workout
+        </button>
     </div>
 
-    <div id="workout-screen">
-        <div id="round-display" class="round-pill"></div>
-        <div id="phase-title" class="phase-badge text-cyan"></div>
-        <div id="quote-display" style="height: 25px; font-style: italic; margin-bottom: 5px; text-align: center; padding: 0 10px;"></div>
-        <div id="timer-display" class="timer-big"></div>
-        <div class="paused-text">PAUSED</div>
+    <div id="workout-view">
+        <div class="ring-container">
+            <svg class="progress-ring" width="320" height="320">
+                <circle class="progress-ring__bg" stroke="#333" stroke-width="12" fill="transparent" r="140" cx="160" cy="160"/>
+                <circle class="progress-ring__circle" id="progress-circle" stroke="var(--primary-green)" stroke-width="12" stroke-linecap="round" fill="transparent" r="140" cx="160" cy="160"/>
+            </svg>
+            <div class="timer-content">
+                <div id="phase-text" class="phase-label">READY</div>
+                <div id="timer-text" class="main-timer">5</div>
+                <div id="round-text" class="round-info">Round 1/6</div>
+            </div>
+        </div>
 
-        <div class="control-bar">
-            <button class="ctrl-btn btn-stop" onclick="stopWorkout()">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
+        <div class="control-dock">
+            <button class="dock-btn btn-stop" onclick="stopWorkout()">
+                <svg class="btn-icon" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
             </button>
-            <button id="play-pause-btn" class="ctrl-btn btn-pause" onclick="togglePause()">
-                </button>
+            <button id="pp-btn" class="dock-btn btn-pause" onclick="togglePause()">
+                <svg class="btn-icon" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+            </button>
         </div>
     </div>
 
     <script>
-        // --- State & Config ---
-        let state = { work: 30, rest: 15, rounds: 6, speedLevel: 3 };
-        let app = { 
-            timer: null, 
-            timeLeft: 0, 
-            currentRound: 1, 
-            isRunning: false, 
-            isPaused: false,
-            phase: 'stopped', 
-            muted: false, 
-            wakeLock: null, 
-            audioCtx: new (window.AudioContext || window.webkitAudioContext)() 
+        // State
+        let config = { work: 30, rest: 15, rounds: 6 };
+        let session = { 
+            timer: null, timeLeft: 0, totalTime: 0, currentRound: 1, 
+            phase: 'stopped', isPaused: false, muted: false,
+            audioCtx: new (window.AudioContext || window.webkitAudioContext)()
         };
 
-        const quotes = {
-            work: ["โยกหัวหลุด!", "เอาให้ตาแตก!", "เร็วกว่านี้!", "ไฟลุกแล้ววว!", "อย่าเพิ่งตาย!"],
-            rest: ["พักสายตาเถอะนะ", "หายใจเข้าลึกๆ", "นิ่งๆ ไว้", "เตรียมระเบิดพลัง", "จิบน้ำเบาๆ"],
-            ready: ["เตรียมตัวแสบตา...", "พร้อมมั้ย?", "3.. 2.. 1..", "ตั้งสติ!"]
-        };
+        // Circle Progress Logic
+        const circle = document.getElementById('progress-circle');
+        const radius = circle.r.baseVal.value;
+        const circumference = radius * 2 * Math.PI;
+        circle.style.strokeDasharray = `${circumference} ${circumference}`;
+        circle.style.strokeDashoffset = circumference;
 
-        const icons = {
-            pause: `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>`,
-            play: `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`
-        };
-
-        // --- Init & Storage ---
-        const configMap = [
-            { id: 'work', label: 'เวลาลุย (วิ)', step: 5, min: 5 },
-            { id: 'rest', label: 'เวลาพัก (วิ)', step: 5, min: 0 },
-            { id: 'rounds', label: 'จำนวนรอบ', step: 1, min: 1 },
-            { id: 'speedLevel', label: 'ความเร็วเสียง', step: 1, min: 1, max: 5, readonly: true }
-        ];
-
-        window.onload = () => {
-            loadSettings();
-            renderSettings();
-        };
-
-        function renderSettings() {
-            const container = document.getElementById('settings-container');
-            container.innerHTML = '';
-            configMap.forEach(cfg => {
-                container.innerHTML += `
-                <div class="setting-row">
-                    <div>${cfg.label}</div>
-                    <div class="controls">
-                        <button class="neu-btn" onclick="adjust('${cfg.id}', -${cfg.step})">-</button>
-                        <input type="number" id="val-${cfg.id}" class="neu-input" value="${state[cfg.id]}" 
-                               onchange="adjust('${cfg.id}', 0, this.value)" ${cfg.readonly ? 'readonly' : ''}>
-                        <button class="neu-btn" onclick="adjust('${cfg.id}', ${cfg.step})">+</button>
-                    </div>
-                </div>`;
-            });
-            updateTotalCalc();
+        function setProgress(percent) {
+            const offset = circumference - (percent / 100) * circumference;
+            circle.style.strokeDashoffset = offset;
         }
 
-        function loadSettings() {
-            const saved = localStorage.getItem('hiitConfig');
-            if (saved) {
-                try { state = JSON.parse(saved); } catch (e) { console.error('Load config failed'); }
-            }
-        }
-
-        function saveSettings() {
-            localStorage.setItem('hiitConfig', JSON.stringify(state));
-        }
-
-        function adjust(key, delta, manualVal = null) {
-            let val = manualVal !== null ? parseInt(manualVal) : state[key] + delta;
-            const conf = configMap.find(c => c.id === key);
+        function adjust(key, val) {
+            config[key] += val;
+            if (config[key] < 1) config[key] = 1; // Min limit
+            if (config[key] > 99) config[key] = 99; // Max reasonable limit
+            if (key === 'rest' && config[key] < 0) config[key] = 0;
             
-            if (isNaN(val)) val = conf.min;
-            if (val < (conf.min || 1)) val = conf.min || 1;
-            if (conf.max && val > conf.max) val = conf.max;
-            
-            state[key] = val;
-            document.getElementById(`val-${key}`).value = val;
+            document.getElementById(`val-${key}`).innerText = config[key];
             updateTotalCalc();
-            saveSettings(); // Auto save
         }
 
         function updateTotalCalc() {
-            let total = (state.work + state.rest) * state.rounds;
-            document.getElementById('total-time-calc').innerText = `รวมเวลา: ${Math.floor(total / 60)} นาที ${total % 60} วินาที`;
+            let totalSec = (config.work + config.rest) * config.rounds;
+            let m = Math.floor(totalSec / 60);
+            let s = totalSec % 60;
+            document.getElementById('total-calc').innerText = `Total: ${m}:${s.toString().padStart(2, '0')}`;
         }
 
-        // --- Audio Logic ---
-        function playBeep(freq = 440, type = 'square') {
-            if (app.muted || app.isPaused) return;
-            if (app.audioCtx.state === 'suspended') app.audioCtx.resume();
+        // Audio (Subtle Bleeps)
+        function beep(freq = 600, type = 'sine') {
+            if (session.muted) return;
+            if (session.audioCtx.state === 'suspended') session.audioCtx.resume();
             
-            const osc = app.audioCtx.createOscillator();
-            const gain = app.audioCtx.createGain();
+            const osc = session.audioCtx.createOscillator();
+            const gain = session.audioCtx.createGain();
+            osc.connect(gain); gain.connect(session.audioCtx.destination);
             
-            osc.connect(gain); gain.connect(app.audioCtx.destination);
             osc.frequency.value = freq; osc.type = type;
+            gain.gain.setValueAtTime(0.1, session.audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, session.audioCtx.currentTime + 0.15);
             
-            gain.gain.setValueAtTime(0.5, app.audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, app.audioCtx.currentTime + 0.1);
-            
-            osc.start(); osc.stop(app.audioCtx.currentTime + 0.1);
+            osc.start(); osc.stop(session.audioCtx.currentTime + 0.15);
         }
 
-        let soundLoop;
-        function setPartyMode(active) {
-            const body = document.body;
-            clearInterval(soundLoop);
-            
-            if (active) {
-                body.classList.add('party-mode');
-                let delay = 600 - (state.speedLevel * 100);
-                soundLoop = setInterval(() => playBeep(880, 'sawtooth'), delay);
-            } else {
-                body.classList.remove('party-mode');
-            }
-        }
-
-        // --- Workflow ---
-        async function startWorkout() {
-            app.isRunning = true;
-            app.isPaused = false;
-            app.currentRound = 1;
-            
-            document.body.classList.add('view-workout');
-            document.body.classList.remove('is-paused');
-            
-            try { app.wakeLock = await navigator.wakeLock.request('screen'); } catch(e){}
-            
-            updatePauseBtnUI();
+        // Workflow
+        function startWorkout() {
+            session.currentRound = 1;
+            session.isPaused = false;
+            document.body.classList.add('active-workout');
             startPhase('ready');
         }
 
         function stopWorkout() {
-            app.isRunning = false;
-            app.isPaused = false;
-            clearInterval(app.timer);
-            setPartyMode(false);
-            
-            if (app.wakeLock) app.wakeLock.release();
-            
-            document.body.classList.remove('view-workout');
-            document.body.classList.remove('is-paused');
+            clearInterval(session.timer);
+            document.body.classList.remove('active-workout');
+            session.phase = 'stopped';
         }
 
         function togglePause() {
-            app.isPaused = !app.isPaused;
-            const body = document.body;
-
-            if (app.isPaused) {
-                // Pause Action
-                clearInterval(app.timer);
-                setPartyMode(false); // Stop sound
-                body.classList.add('is-paused');
+            session.isPaused = !session.isPaused;
+            const btn = document.getElementById('pp-btn');
+            
+            if (session.isPaused) {
+                clearInterval(session.timer);
+                btn.className = 'dock-btn btn-play';
+                btn.innerHTML = `<svg class="btn-icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
+                document.getElementById('workout-view').style.opacity = '0.5';
             } else {
-                // Resume Action
-                body.classList.remove('is-paused');
-                if (app.phase === 'work') setPartyMode(true); // Resume sound if work
-                runTimer(); // Resume timer
-            }
-            updatePauseBtnUI();
-        }
-
-        function updatePauseBtnUI() {
-            const btn = document.getElementById('play-pause-btn');
-            if (app.isPaused) {
-                btn.innerHTML = icons.play;
-                btn.className = 'ctrl-btn btn-resume';
-            } else {
-                btn.innerHTML = icons.pause;
-                btn.className = 'ctrl-btn btn-pause';
+                runTimer();
+                btn.className = 'dock-btn btn-pause';
+                btn.innerHTML = `<svg class="btn-icon" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
+                document.getElementById('workout-view').style.opacity = '1';
             }
         }
 
         function startPhase(phase) {
-            app.phase = phase;
-            clearInterval(app.timer);
-            
-            const els = {
-                round: document.getElementById('round-display'),
-                title: document.getElementById('phase-title'),
-                quote: document.getElementById('quote-display'),
-                timer: document.getElementById('timer-display')
-            };
+            session.phase = phase;
+            clearInterval(session.timer);
 
-            els.round.innerText = `รอบที่ ${app.currentRound} / ${state.rounds}`;
-            
-            let duration, color, titleText, quoteList, party = false;
-            
+            let duration, color, label;
+            const root = document.documentElement;
+
             if (phase === 'ready') {
-                duration = 5; color = 'var(--yellow)'; titleText = 'เตรียมตัว'; quoteList = quotes.ready;
+                duration = 5; color = 'var(--primary-blue)'; label = 'GET READY';
             } else if (phase === 'work') {
-                duration = state.work; color = 'var(--cyan)'; titleText = 'ลุย!'; quoteList = quotes.work; party = true;
-            } else { // rest
-                duration = state.rest; color = 'var(--red)'; titleText = 'พัก'; quoteList = quotes.rest;
+                duration = config.work; color = 'var(--primary-green)'; label = 'WORK';
+                beep(880); // High beep for start
+            } else {
+                duration = config.rest; color = 'var(--primary-orange)'; label = 'REST';
+                beep(440); // Low beep for rest
             }
 
-            app.timeLeft = duration;
-            els.title.innerText = titleText;
-            els.title.style.color = color;
-            els.timer.style.color = color;
-            els.quote.innerText = quoteList[Math.floor(Math.random() * quoteList.length)];
+            session.timeLeft = duration;
+            session.totalTime = duration;
+
+            // UI Updates
+            const view = document.getElementById('workout-view');
+            view.className = ''; 
+            view.classList.add(`phase-${phase}`);
             
-            setPartyMode(party);
-            updateTimerDisplay();
+            document.getElementById('phase-text').innerText = label;
+            document.getElementById('timer-text').innerText = duration;
+            document.getElementById('round-text').innerText = `Round ${session.currentRound}/${config.rounds}`;
+            circle.style.stroke = color;
+
+            setProgress(100);
             runTimer();
         }
 
         function runTimer() {
-            app.timer = setInterval(() => {
-                app.timeLeft--;
-                updateTimerDisplay();
-                if (app.timeLeft < 0) nextPhase();
+            session.timer = setInterval(() => {
+                session.timeLeft--;
+                document.getElementById('timer-text').innerText = session.timeLeft;
+                
+                // Progress Ring Logic
+                const pct = (session.timeLeft / session.totalTime) * 100;
+                setProgress(pct);
+
+                if (session.timeLeft <= 3 && session.timeLeft > 0) beep(600); // Countdown beeps
+
+                if (session.timeLeft < 0) {
+                    nextPhase();
+                }
             }, 1000);
         }
 
         function nextPhase() {
-            if (app.phase === 'ready') return startPhase('work');
-            if (app.phase === 'work') {
-                if (app.currentRound >= state.rounds) return stopWorkout();
-                if (state.rest === 0) { // No rest mode
-                    app.currentRound++;
-                    return startPhase('work');
-                }
+            if (session.phase === 'ready') return startPhase('work');
+            
+            if (session.phase === 'work') {
+                if (session.currentRound >= config.rounds) return stopWorkout();
                 return startPhase('rest');
             }
-            if (app.phase === 'rest') {
-                app.currentRound++;
-                if (app.currentRound > state.rounds) return stopWorkout();
-                return startPhase('work');
+            
+            if (session.phase === 'rest') {
+                session.currentRound++;
+                startPhase('work');
             }
-        }
-
-        function updateTimerDisplay() {
-            document.getElementById('timer-display').innerText = app.timeLeft >= 0 ? app.timeLeft : 0;
         }
 
         function toggleMute() {
-            app.muted = !app.muted;
-            document.getElementById('mute-btn').classList.toggle('muted', app.muted);
+            session.muted = !session.muted;
+            const line = document.querySelector('.mute-strike');
+            line.style.display = session.muted ? 'block' : 'none';
+            document.getElementById('mute-btn').classList.toggle('muted-state');
         }
         
-        // Visibility API to keep WakeLock fresh
-        document.addEventListener('visibilitychange', async () => {
-            if (app.isRunning && !app.isPaused && document.visibilityState === 'visible') {
-                try { app.wakeLock = await navigator.wakeLock.request('screen'); } catch(e){}
-            }
-        });
+        // Initial setup
+        updateTotalCalc();
     </script>
 </body>
 </html>
